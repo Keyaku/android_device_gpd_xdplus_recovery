@@ -1,0 +1,6 @@
+# Kernel is built by the ROM tree and copied in; see README.md.
+prebuilt/Image.gz-dtb
+prebuilt/*.img
+
+*.swp
+.DS_Store
