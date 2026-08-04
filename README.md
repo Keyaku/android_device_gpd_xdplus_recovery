@@ -77,9 +77,16 @@ The bootloader is locked, so there is no `fastboot flash`, and recovery is the o
 
 ## Status
 
-**Builds.** `mka recoveryimage` produces **TWRP 3.7.0_11-0**, 22,466,560 bytes, whose boot header matches the shipped 3.4.0-0 image exactly (kernel `0x40080000`, ramdisk `0x49000000`, page 2048, header v0). The ramdisk carries this tree's fstab, both `init.recovery.*.rc` and `ueventd.mt8173.rc`.
+**Working on hardware.** `mka recoveryimage` produces **TWRP 3.7.0_11-0**, 22,464,512 bytes, whose boot header matches the shipped 3.4.0-0 image exactly (kernel `0x40080000`, ramdisk `0x49000000`, page 2048, header v0).
 
-**Not yet flashed or booted.** Everything above is a build-time result; nothing here has run on the device. See the flashing warning above before changing that.
+Flashed and verified on the device:
+
+- boots, displays landscape, and touch tracks correctly;
+- `adb` works in recovery;
+- `/data`, `/system_root` and `/vendor` all mount from the real partitions;
+- writes a partition **by name**, through both the `soc/11230000.mmc` and `mtk-msdc.0` forms.
+
+Still open: the UI is small (the landscape theme's 1920×1200 coordinate space scales down to 1280×720), and the on-screen navigation bar is redundant on a device with physical buttons.
 
 Requires `patches/0001` against `bootable/recovery` — see `patches/README.md`.
 
