@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Local manifest for the GPD XD+ recovery tree.
+
+  This belongs to the TWRP build tree (platform_manifest_twrp_aosp, twrp-11) —
+  NOT to the LineageOS tree. The two are separate repo checkouts, and a manifest
+  only governs paths inside its own tree, so the ROM's kernel/device/vendor
+  projects and this one cannot share a manifest.
+
+  Unlike the ROM-side manifest, this one is ready to use: the project below is
+  already pushed. To activate, from the root of the twrp-11 checkout:
+
+      mkdir -p .repo/local_manifests
+      cp device/gpd/xdplus/local_manifests/xdplus-recovery.xml .repo/local_manifests/
+      repo sync device/gpd/xdplus
+
+  ⚠️ A fresh clone does NOT get a kernel. TARGET_PREBUILT_KERNEL points at
+  prebuilt/Image.gz-dtb, which is gitignored — copy in the Image.gz-dtb built by
+  the LineageOS tree before building. See the tree's README.
+
+  ⚠️ The patches under patches/ must be applied to bootable/recovery after every
+  repo sync, or the build fails (0001) or ships dead UI (0002).
+-->
+<manifest>
+
+  <remote  name="keyaku"
+           fetch="https://github.com/Keyaku" />
+
+  <project path="device/gpd/xdplus"
+           name="android_device_gpd_xdplus_recovery"
+           remote="keyaku"
+           revision="refs/heads/android-11" />
+
+</manifest>

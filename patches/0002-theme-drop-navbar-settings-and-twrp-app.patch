@@ -1,0 +1,80 @@
+diff --git a/gui/theme/common/landscape.xml b/gui/theme/common/landscape.xml
+index c0d14d8..92236da 100755
+--- a/gui/theme/common/landscape.xml
++++ b/gui/theme/common/landscape.xml
+@@ -3303,60 +3303,6 @@
+ 				</listitem>
+ 			</listbox>
+ 
+-			<checkbox>
+-				<placement x="%col1_x_right%" y="%row3a_y%"/>
+-				<text>{@rev_navbar_chk=Reversed navbar layout}</text>
+-				<data variable="tw_samsung_navbar"/>
+-			</checkbox>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" op="!=" var2="0"/>
+-				<placement x="%col1_x_right%" y="%row5_y%" textplacement="6"/>
+-				<text>{@ctr_navbar_rdo=Center navbar buttons}</text>
+-				<image resource="radio_false"/>
+-				<action function="set">tw_navbar_button_position=0</action>
+-			</button>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" var2="0"/>
+-				<placement x="%col1_x_right%" y="%row5_y%" textplacement="6"/>
+-				<text>{@ctr_navbar_rdo=Center navbar buttons}</text>
+-				<image resource="radio_true"/>
+-				<action function="set">tw_navbar_button_position=0</action>
+-			</button>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" op="!=" var2="1"/>
+-				<placement x="%col1_x_right%" y="%row6a_y%" textplacement="6"/>
+-				<text>{@lft_navbar_rdo=Left align navbar buttons}</text>
+-				<image resource="radio_false"/>
+-				<action function="set">tw_navbar_button_position=1</action>
+-			</button>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" var2="1"/>
+-				<placement x="%col1_x_right%" y="%row6a_y%" textplacement="6"/>
+-				<text>{@lft_navbar_rdo=Left align navbar buttons}</text>
+-				<image resource="radio_true"/>
+-				<action function="set">tw_navbar_button_position=1</action>
+-			</button>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" op="!=" var2="2"/>
+-				<placement x="%col1_x_right%" y="%row8_y%" textplacement="6"/>
+-				<text>{@rht_navbar_rdo=Right align navbar buttons}</text>
+-				<image resource="radio_false"/>
+-				<action function="set">tw_navbar_button_position=2</action>
+-			</button>
+-
+-			<button style="radiobutton">
+-				<condition var1="tw_navbar_button_position" var2="2"/>
+-				<placement x="%col1_x_right%" y="%row8_y%" textplacement="6"/>
+-				<text>{@rht_navbar_rdo=Right align navbar buttons}</text>
+-				<image resource="radio_true"/>
+-				<action function="set">tw_navbar_button_position=2</action>
+-			</button>
+-
+ 			<button style="main_button_half_width">
+ 				<placement x="%col2_x_right%" y="%row15a_y%"/>
+ 				<text>{@restore_defaults_btn=Restore Defaults}</text>
+@@ -3835,14 +3781,6 @@
+ 						<action function="page">confirm_action</action>
+ 					</actions>
+ 				</listitem>
+-				<listitem name="{@reboot_install_app_hdr=Install TWRP App}">
+-					<condition var1="tw_app_install_status" var2="1"/>
+-					<actions>
+-						<action function="set">tw_back=advanced</action>
+-						<action function="set">tw_appinstall_title={@advanced_hdr=Advanced}</action>
+-						<action function="page">installapp</action>
+-					</actions>
+-				</listitem>
+ 				<listitem name="{@uninstall_twrp_system_app=Uninstall TWRP App from System}">
+ 					<condition var1="tw_app_installed_in_system" var2="1"/>
+ 					<actions>
