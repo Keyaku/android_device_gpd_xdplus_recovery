@@ -102,6 +102,16 @@ The stock landscape theme is designed for a 1920×1200 coordinate space, which s
 
 Requires `patches/0001` against `bootable/recovery` — see `patches/README.md`.
 
+## Version policy — track the OS, not TWRP releases
+
+This tree targets the **`twrp-11` base (Android 11)**, matching the ROM it services, and the branch is named `android-11` after that base.
+
+A newer TWRP base is forced by dynamic partitions, A/B, `vendor_boot`, or FBE/metadata encryption. This device has none of them — which is also why TWRP needs no vendor blobs and no keymaster/gatekeeper HAL here — so an Android 11 recovery services this ROM completely, and chasing newer TWRP releases for their own sake buys nothing.
+
+**Add a new `android-*` branch only if the ROM moves to a newer Android.** Two things in this tree are base-specific: the `base.mk` + `core_64_bit.mk` inherit (AOSP 11 removed `embedded.mk`, which every pre-11 TWRP tree names) and the patches under `patches/`. Everything else — board flags, fstab, `init.recovery.*.rc`, rotation, touch transform, theme — carries forward unchanged.
+
+⚠️ On a much newer base, note the one risk that does not apply today: Android 14 userspace on this 3.18 kernel relies on bionic fallbacks for `statx`, `faccessat2` and `clone3` that are probable rather than proven, and any failure surfaces at runtime — on the riskiest flash this device has.
+
 ## Credits
 
 - Goayandi — the original `gpd_en` minimal TWRP tree the board flags come from.
