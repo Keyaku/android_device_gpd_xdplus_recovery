@@ -67,13 +67,16 @@ on fs
 
 The recovery kernel exposes block devices under `/dev/block/platform/soc/11230000.mmc/by-name`, while the running Android system exposes them under `/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name`. That symlink is what makes the second form resolve in recovery, and every flashable zip for this device — including the stock ones — writes partitions through it. **Removing it silently breaks partition writes from recovery.**
 
-## ⚠️ Flashing this is the riskiest operation on this device
+## Flashing
 
-The bootloader is locked, so there is no `fastboot flash`, and recovery is the only way back from a bad boot or system image.
+The bootloader is locked, so images are written with `dd` from a rooted system or from TWRP rather than with `fastboot flash`. That is a difference in method, not a risk: this SoC's boot ROM download mode is fully open on this device, so the preloader channel can read and write every partition regardless of the lock state, and no partition write is one-way.
 
-- Back up the current recovery partition first and keep it.
-- **Never flash a new recovery in the same session as a new boot or system image.** Flash recovery alone, confirm the device still boots and still has root, and only then reboot into the new recovery to test it.
-- A bad recovery on its own is survivable — write the backup back to the recovery partition from a booted, rooted system. A bad recovery *plus* a bad boot means SP Flash Tool.
+Practical habits, not warnings:
+
+- Keep a copy of the current recovery partition — it is the fastest way back, and much quicker than going through the preloader.
+- Flash recovery on its own, confirm the device still boots, then reboot into the new recovery to test it.
+
+The full flashing procedure for this device — including recovery — is documented in the umbrella ROM repository, which is the right place to follow along from.
 
 ## Status
 
@@ -110,7 +113,7 @@ A newer TWRP base is forced by dynamic partitions, A/B, `vendor_boot`, or FBE/me
 
 **Add a new `android-*` branch only if the ROM moves to a newer Android.** Two things in this tree are base-specific: the `base.mk` + `core_64_bit.mk` inherit (AOSP 11 removed `embedded.mk`, which every pre-11 TWRP tree names) and the patches under `patches/`. Everything else — board flags, fstab, `init.recovery.*.rc`, rotation, touch transform, theme — carries forward unchanged.
 
-⚠️ On a much newer base, note the one risk that does not apply today: Android 14 userspace on this 3.18 kernel relies on bionic fallbacks for `statx`, `faccessat2` and `clone3` that are probable rather than proven, and any failure surfaces at runtime — on the riskiest flash this device has.
+⚠️ On a much newer base, note the one issue that does not apply today: Android 14 userspace on this 3.18 kernel relies on bionic fallbacks for `statx`, `faccessat2` and `clone3` that are probable rather than proven, and any failure surfaces at runtime rather than at build time.
 
 ## Credits
 

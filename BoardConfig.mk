@@ -6,7 +6,7 @@
 
 DEVICE_PATH := device/gpd/xdplus
 
-# Bootloader — locked, and there is no fastboot flash on this device.
+# Bootloader — not built or flashed from this tree; images are written with dd.
 TARGET_NO_BOOTLOADER := true
 TARGET_BOOTLOADER_BOARD_NAME :=
 
