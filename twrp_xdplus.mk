@@ -6,8 +6,10 @@
 
 PRODUCT_RELEASE_NAME := xdplus
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/embedded.mk)
+# AOSP 11 removed embedded.mk; base.mk is the minimal product to inherit here.
+$(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/languages_full.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 
 # TWRP itself
 $(call inherit-product, vendor/twrp/config/common.mk)

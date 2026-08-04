@@ -21,12 +21,16 @@ repo sync
 
 Place this tree at `device/gpd/xdplus`, then:
 
+Apply the patches in `patches/` (see `patches/README.md`), then:
+
 ```bash
 export ALLOW_MISSING_DEPENDENCIES=true
 source build/envsetup.sh
 lunch twrp_xdplus-eng
 mka recoveryimage
 ```
+
+⚠️ This tree must be a **real directory** at `device/gpd/xdplus`, not a symlink to one elsewhere — the build locates products with `find`, which does not follow symlinks, and the product simply will not be found.
 
 ### The kernel is not built here
 
@@ -54,7 +58,11 @@ The bootloader is locked, so there is no `fastboot flash`, and recovery is the o
 
 ## Status
 
-Not yet built or flashed. Target order: get a working build on `twrp-11`, verify it boots, mounts `/data` and `/system/vendor`, exposes `adb`, and can write a partition by name; then attempt the same tree on a newer TWRP branch.
+**Builds.** `mka recoveryimage` produces **TWRP 3.7.0_11-0**, 22,466,560 bytes, whose boot header matches the shipped 3.4.0-0 image exactly (kernel `0x40080000`, ramdisk `0x49000000`, page 2048, header v0). The ramdisk carries this tree's fstab, both `init.recovery.*.rc` and `ueventd.mt8173.rc`.
+
+**Not yet flashed or booted.** Everything above is a build-time result; nothing here has run on the device. See the flashing warning above before changing that.
+
+Requires `patches/0001` against `bootable/recovery` — see `patches/README.md`.
 
 ## Credits
 

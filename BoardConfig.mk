@@ -36,7 +36,9 @@ BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 
 # verified: matches the shipped recovery's boot header byte for byte
 # (kernel_addr 0x40080000, ramdisk_addr 0x49000000, page 2048, header v0).
-BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 buildvariant=eng
+# The build appends buildvariant= itself; do not repeat it here. Keep this
+# short — the bootloader truncates the command line it passes on.
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2
 BOARD_KERNEL_BASE := 0x40078000
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_MKBOOTIMG_ARGS := --kernel_offset 0x00008000 --ramdisk_offset 0x08f88000 \

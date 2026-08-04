@@ -1,0 +1,94 @@
+diff --git a/data.cpp b/data.cpp
+index 96e4b5e..86be008 100755
+--- a/data.cpp
++++ b/data.cpp
+@@ -48,6 +48,17 @@ extern "C"
+ }
+ #include "minuitwrp/minui.h"
+ 
++// The LUN path is a build-time string that may or may not contain a %d
++// conversion: devices with a single mass-storage LUN configure a literal path.
++// Routing it through a pointer keeps the existing runtime '%' check as the
++// thing that decides, instead of failing the build under -Wformat-extra-args
++// on every device whose path has no conversion.
++static const char* custom_lun_file_fmt() {
++	static const std::string fmt(CUSTOM_LUN_FILE);
++	return fmt.c_str();
++}
++
++
+ #define FILE_VERSION 0x00010010 // Do not set to 0
+ 
+ using namespace std;
+@@ -693,7 +704,7 @@ void DataManager::SetDefaultValues()
+ 	string Lun_File_str = CUSTOM_LUN_FILE;
+ 	size_t found = Lun_File_str.find("%");
+ 	if (found != string::npos) {
+-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
++		sprintf(lun_file, custom_lun_file_fmt(), 0);
+ 		Lun_File_str = lun_file;
+ 	}
+ 	if (!TWFunc::Path_Exists(Lun_File_str)) {
+diff --git a/partitionmanager.cpp b/partitionmanager.cpp
+index 5aee83f..2fe8f1e 100755
+--- a/partitionmanager.cpp
++++ b/partitionmanager.cpp
+@@ -2104,6 +2104,16 @@ TWPartition* TWPartitionManager::Find_Next_Storage(string Path, bool Exclude_Dat
+ 	return NULL;
+ }
+ 
++// The LUN path is a build-time string that may or may not contain a %d
++// conversion: devices with a single mass-storage LUN configure a literal path.
++// Routing it through a pointer keeps the existing runtime '%' check as the
++// thing that decides, instead of failing the build under -Wformat-extra-args
++// on every device whose path has no conversion.
++static const char* custom_lun_file_fmt() {
++	static const std::string fmt(CUSTOM_LUN_FILE);
++	return fmt.c_str();
++}
++
+ int TWPartitionManager::Open_Lun_File(string Partition_Path, string Lun_File) {
+ 	TWPartition* Part = Find_Partition_By_Path(Partition_Path);
+ 
+@@ -2130,14 +2140,14 @@ int TWPartitionManager::usb_storage_enable(void) {
+ 	string Lun_File_str = CUSTOM_LUN_FILE;
+ 	size_t found = Lun_File_str.find("%");
+ 	if (found != string::npos) {
+-		sprintf(lun_file, CUSTOM_LUN_FILE, 1);
++		sprintf(lun_file, custom_lun_file_fmt(), 1);
+ 		if (TWFunc::Path_Exists(lun_file))
+ 			has_multiple_lun = true;
+ 	}
+ 	mtp_was_enabled = TWFunc::Toggle_MTP(false); // Must disable MTP for USB Storage
+ 	if (!has_multiple_lun) {
+ 		LOGINFO("Device doesn't have multiple lun files, mount current storage\n");
+-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
++		sprintf(lun_file, custom_lun_file_fmt(), 0);
+ 		if (TWFunc::Get_Root_Path(DataManager::GetCurrentStoragePath()) == "/data") {
+ 			TWPartition* Mount = Find_Next_Storage("", true);
+ 			if (Mount) {
+@@ -2155,13 +2165,13 @@ int TWPartitionManager::usb_storage_enable(void) {
+ 		LOGINFO("Device has multiple lun files\n");
+ 		TWPartition* Mount1;
+ 		TWPartition* Mount2;
+-		sprintf(lun_file, CUSTOM_LUN_FILE, 0);
++		sprintf(lun_file, custom_lun_file_fmt(), 0);
+ 		Mount1 = Find_Next_Storage("", true);
+ 		if (Mount1) {
+ 			if (!Open_Lun_File(Mount1->Mount_Point, lun_file)) {
+ 				goto error_handle;
+ 			}
+-			sprintf(lun_file, CUSTOM_LUN_FILE, 1);
++			sprintf(lun_file, custom_lun_file_fmt(), 1);
+ 			Mount2 = Find_Next_Storage(Mount1->Mount_Point, true);
+ 			if (Mount2 && Mount2->Mount_Point != Mount1->Mount_Point) {
+ 				Open_Lun_File(Mount2->Mount_Point, lun_file);
+@@ -2191,7 +2201,7 @@ int TWPartitionManager::usb_storage_disable(void) {
+ 	string str = ch;
+ 
+ 	for (index=0; index<2; index++) {
+-		sprintf(lun_file, CUSTOM_LUN_FILE, index);
++		sprintf(lun_file, custom_lun_file_fmt(), index);
+ 		if (!TWFunc::write_to_file(lun_file, str)) {
+ 			break;
+ 			ret = -1;
