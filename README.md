@@ -19,9 +19,7 @@ repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aos
 repo sync
 ```
 
-Place this tree at `device/gpd/xdplus`, then:
-
-Apply the patches in `patches/` (see `patches/README.md`), then:
+Place this tree at `device/gpd/xdplus`, apply the patches in `patches/` (see `patches/README.md`), then:
 
 ```bash
 export ALLOW_MISSING_DEPENDENCIES=true
