@@ -86,7 +86,19 @@ Flashed and verified on the device:
 - `/data`, `/system_root` and `/vendor` all mount from the real partitions;
 - writes a partition **by name**, through both the `soc/11230000.mmc` and `mtk-msdc.0` forms.
 
-Still open: the UI is small (the landscape theme's 1920×1200 coordinate space scales down to 1280×720), and the on-screen navigation bar is redundant on a device with physical buttons.
+### Interface
+
+The stock landscape theme is designed for a 1920×1200 coordinate space, which scales badly onto this panel. `TW_CUSTOM_THEME` points at `theme/ui.xml`, derived from `landscape_hdpi` with:
+
+- the on-screen navigation bar removed (this device has physical buttons) and the coordinate space reduced 1200 → 1104 to reclaim it, which also scales the whole UI up ~9% and brings the vertical scale (0.652) closer to the horizontal (0.667);
+- larger text where it was hardest to read — `font_m` 32 → 46 (checkboxes, lists, list items), `font_s` 28 → 36 (tabs) — while `font_l` (main buttons) stays at 50;
+- a dedicated `font_status` for the status bar, so tuning list text no longer pushes the clock, CPU and battery readouts into each other.
+
+`patches/0002` drops the now-meaningless navbar settings and the "Install TWRP App" entry from the shared `landscape.xml` pages.
+
+⚠️ **Theme placeholders are not substituted on the custom path.** `copyCustomTheme()` runs *after* `copyThemeResources()` and overwrites its output, so `{themeversion}`, `{battery_pos}`, `{cpu_pos}`, `{clock_12_pos}`, `{clock_24_pos}` and `{statusicons_align}` must all be resolved by hand in `theme/ui.xml`. A stale `{themeversion}` makes TWRP silently fall back to the stock theme; unresolved position placeholders evaluate to 0 and stack the status bar items on top of each other. Gate on `grep -c '{[a-z_0-9]*}' == 0` in the installed `twres/ui.xml`.
+
+⚠️ **Iterate with Reload Theme, not reboots.** Zip the build's staged `twres/` and push it to `/data/media/0/TWRP/theme/ui.zip`, then use Advanced → Reload Theme. Two packaging rules: entries must not carry a `./` prefix, and **language XMLs must sit at the archive root** — when a theme comes from a package TWRP extracts it to `/twres/customlanguages/` and scans only that directory's top level, so languages nested under `languages/` leave the language list empty. That affects packaged themes only; the built-in path scans `/twres/languages/`. ⚠️ **Delete the test zip afterwards** — it is loaded on every boot and will keep overriding the flashed theme.
 
 Requires `patches/0001` against `bootable/recovery` — see `patches/README.md`.
 

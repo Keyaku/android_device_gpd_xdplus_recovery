@@ -72,6 +72,22 @@ TARGET_INCREASES_COLDBOOT_TIMEOUT := true
 # landscape orientation the device is actually held in.
 TW_THEME := landscape_hdpi
 TW_ROTATION := 270
+
+# Custom ui.xml derived from landscape_hdpi: the on-screen navigation bar is
+# redundant on a device with physical buttons, so it is removed and the theme's
+# coordinate space shrinks from 1200 to 1104 (where the navbar began). That also
+# scales the UI up — 720/1104 = 0.652 against the old 720/1200 = 0.600 — and
+# brings the vertical scale closer to the horizontal 1280/1920 = 0.667, so the
+# layout is less distorted than before. Lowest row the theme actually uses is
+# row18_y = 1008, so nothing is clipped.
+#
+# ⚠️ Only ui.xml is replaced; images, fonts, languages and common/landscape.xml
+# still come from TW_THEME above, so both must stay set.
+# ⚠️ The custom-theme path is a plain file copy with no {themeversion}
+# substitution, so the literal version is baked into the file. If it ever
+# mismatches variables.h's TW_THEME_VERSION, TWRP silently falls back to the
+# stock theme with "theme version from xml: 0, expected N" in the log.
+TW_CUSTOM_THEME := device/gpd/xdplus/theme/ui.xml
 DEVICE_RESOLUTION := 720x1280
 DEVICE_SCREEN_WIDTH := 720
 DEVICE_SCREEN_HEIGHT := 1280
