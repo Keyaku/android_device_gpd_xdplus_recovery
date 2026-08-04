@@ -2,6 +2,8 @@
 
 Recovery device tree for the GPD XD+ / XD Plus, a MediaTek MT8176 (MT8173 platform, PowerVR GX6250) handheld.
 
+It belongs to the [`Keyaku/gpd-xdplus-customrom`](https://github.com/Keyaku/gpd-xdplus-customrom) project — the LineageOS 18.1 port for this device. That repository is where installation, flashing and the rest of the ROM are documented; this one is only the recovery.
+
 ## Why this tree exists
 
 The recovery running on these devices is **TWRP 3.4.0-0**, built on 2020-08-25 against an Android 8.1 omni tree with a `3.18.79+ #36` recovery kernel. **Its source was never published** — the only public trees for this hardware are the 2018 `gpd_en` minimal tree (twrp-7.1, with a 2018 `3.18.35` prebuilt kernel that does not match what is flashed) and an Android 8.1-era ROM device tree under the older `xds` codename. So the recovery could not be rebuilt, patched or updated by anyone.
@@ -45,7 +47,7 @@ Practical habits, not warnings:
 - Keep a copy of the current recovery partition — it is the fastest way back, and much quicker than going through the preloader.
 - Flash recovery on its own, confirm the device still boots, then reboot into the new recovery to test it.
 
-The full flashing procedure for this device — including recovery — is documented in the umbrella ROM repository, which is the right place to follow along from.
+The full flashing procedure for this device — including recovery — is documented in the umbrella ROM repository, [`Keyaku/gpd-xdplus-customrom`](https://github.com/Keyaku/gpd-xdplus-customrom), which is the right place to follow along from.
 
 ## Status
 
