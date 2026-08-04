@@ -66,18 +66,30 @@ TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery/root/system/etc/twrp.fstab
 BOARD_SUPPRESS_SECURE_ERASE := true
 TARGET_INCREASES_COLDBOOT_TIMEOUT := true
 
-# Display — 720x1280 portrait-native panel. Note the running system renders
-# 1280x720 landscape; recovery uses the panel's own orientation.
-TW_THEME := portrait_hdpi
+# Display — 720x1280 portrait-native panel on a device held in landscape.
+# The panel scans portrait and is mounted upside-down (the ROM compensates with
+# ro.sf.hwrotation=180). 180 of rotation undoes the mount, plus 90 to reach the
+# landscape orientation the device is actually held in.
+TW_THEME := landscape_hdpi
+TW_ROTATION := 270
 DEVICE_RESOLUTION := 720x1280
 DEVICE_SCREEN_WIDTH := 720
 DEVICE_SCREEN_HEIGHT := 1280
 BOARD_USE_FRAMEBUFFER_ALPHA_CHANNEL := true
 TARGET_DISABLE_TRIPLE_BUFFERING := false
 
-# Touchscreen is mounted rotated on this panel.
-RECOVERY_TOUCHSCREEN_FLIP_X := true
+# ⚠️ TW_ROTATION rotates GRAPHICS ONLY — minuitwrp's touch path (events.cpp)
+# knows nothing about it and supports just SWAP_XY / FLIP_X / FLIP_Y. The input
+# transform therefore has to reproduce the rotation by hand.
+#
+# Derivation, so this is checkable rather than folklore. At TW_ROTATION 270,
+# gr_clip maps a screen point (sx,sy) onto panel pixel (sy, 1280-sx). The panel
+# is mounted 180 off, which at rotation 0 needed FLIP_X+FLIP_Y, i.e. panel_x =
+# 720-px and panel_y = 1280-py. Combining the two gives sx = py and
+# sy = 720-px — that is SWAP_XY followed by FLIP_Y, and no FLIP_X.
+RECOVERY_TOUCHSCREEN_SWAP_XY := true
 RECOVERY_TOUCHSCREEN_FLIP_Y := true
+# RECOVERY_TOUCHSCREEN_FLIP_X := true
 
 # Storage
 TW_INTERNAL_STORAGE_PATH := "/data/media"
