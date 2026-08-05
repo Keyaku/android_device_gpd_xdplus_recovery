@@ -6,11 +6,11 @@ It belongs to the [`Keyaku/gpd-xdplus-customrom`](https://github.com/Keyaku/gpd-
 
 ## Why this tree exists
 
-The recovery running on these devices is **TWRP 3.4.0-0**, built on 2020-08-25 against an Android 8.1 omni tree with a `3.18.79+ #36` recovery kernel. **Its source was never published** — the only public trees for this hardware are the 2018 `gpd_en` minimal tree (twrp-7.1, with a 2018 `3.18.35` prebuilt kernel that does not match what is flashed) and an Android 8.1-era ROM device tree under the older `xds` codename. So the recovery could not be rebuilt, patched or updated by anyone.
+The last publicly available recovery for these devices is **TWRP 3.4.0-0**, built on 2020-08-25 against an Android 8.1 omni tree with a `3.18.79+ #36` recovery kernel. **Its source was never published** — the only public trees for this hardware are the 2018 `gpd_en` minimal tree (twrp-7.1, with a 2018 `3.18.35` prebuilt kernel) and an Android 8.1-era ROM device tree under the older `xds` codename. So the recovery could not be rebuilt, patched or updated by anyone.
 
 This tree reconstructs it on a current base. Everything under `recovery/root/` was recovered verbatim from the ramdisk of the shipped image; the board flags were carried over from the `gpd_en` tree and then verified against that image's boot header rather than trusted.
 
-Codename is **`xdplus`**, which is what the shipped recovery itself reports (`ro.product.device`, `ro.omni.device`) — not the OEM's `xds`, and not `gpd_en`.
+Codename is **`xdplus`**, which is what the shipped recovery itself reports (`ro.product.device`, `ro.omni.device`), not the OEM's `xds`, and not `gpd_en`.
 
 ## Building
 
@@ -30,19 +30,21 @@ lunch twrp_xdplus-eng
 mka recoveryimage
 ```
 
+### Build notes
+
 ⚠️ This tree must be a **real directory** at `device/gpd/xdplus`, not a symlink to one elsewhere — the build locates products with `find`, which does not follow symlinks, and the product simply will not be found.
 
-Build cold — `rm -rf out/target/product/xdplus` before every rebuild. Incremental builds of this tree are not trustworthy; `CLAUDE.md` has the reason and the full sequence.
+Also, recommended `rm -rf out/target/product/xdplus` before every rebuild. Incremental builds of this tree are not trustworthy; `CLAUDE.md` has the reason and the full sequence (you know, in case you're a machine and need to read that).
 
 ### The kernel is not built here
 
-`TARGET_PREBUILT_KERNEL` points at `prebuilt/Image.gz-dtb`, which is gitignored. Copy in the `Image.gz-dtb` produced by the device's LineageOS 18.1 tree (kernel `3.18.79`) before building. Building the kernel from source inside the recovery tree is possible but pulls a second copy of the kernel and its toolchain into this checkout for no benefit — the ROM tree already builds it.
+`TARGET_PREBUILT_KERNEL` points at `prebuilt/Image.gz-dtb`, which is gitignored. Copy in the `Image.gz-dtb` produced by the device's LineageOS 18.1 tree (kernel `3.18.79`) before building. Building the kernel from source inside the recovery tree is possible but pulls a second copy of the kernel and its toolchain into this checkout for no benefit. The ROM tree already builds it.
 
 ## Flashing
 
-The bootloader is locked, so images are written with `dd` from a rooted system or from TWRP rather than with `fastboot flash`. That is a difference in method, not a risk: this SoC's boot ROM download mode is fully open on this device, so the preloader channel can read and write every partition regardless of the lock state, and no partition write is one-way.
+The bootloader is locked, so images need to be written with `dd` from a rooted system or from TWRP rather than with `fastboot flash`; unlike most modern Android devices, this SoC's boot ROM download mode is fully open on this device, so the preloader channel can read and write every partition regardless of the lock state.
 
-Practical habits, not warnings:
+Go through practical habits as always:
 
 - Keep a copy of the current recovery partition — it is the fastest way back, and much quicker than going through the preloader.
 - Flash recovery on its own, confirm the device still boots, then reboot into the new recovery to test it.
@@ -51,7 +53,7 @@ The full flashing procedure for this device — including recovery — is docume
 
 ## Status
 
-**Working on hardware.** `mka recoveryimage` produces **TWRP 3.7.0_11-0**, 22,464,512 bytes, whose boot header matches the shipped 3.4.0-0 image exactly (kernel `0x40080000`, ramdisk `0x49000000`, page 2048, header v0).
+`mka recoveryimage` produces **TWRP 3.7.0_11-0**.
 
 Flashed and verified on the device:
 
@@ -77,5 +79,4 @@ This tree targets the **`twrp-11` base (Android 11)**, matching the ROM it servi
 ## Credits
 
 - Goayandi — the original `gpd_en` minimal TWRP tree the board flags come from.
-- BlackSeraph — the 3.4.0-0 build this tree reconstructs.
 - TeamWin — TWRP.
