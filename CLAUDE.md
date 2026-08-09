@@ -23,6 +23,27 @@ mka recoveryimage
 2. `recovery/root/twres/` is populated;
 3. the image size matches the last known-good (a change of a few MB means missing files, and **an image md5 that did not change after a rebuild means nothing was rebuilt**).
 
+## Board flags here are mostly `ifneq (…,)`, so `:= false` turns things ON
+
+`bootable/recovery/Android.mk` tests most TWRP board flags for *non-empty*, not for `true`:
+
+```make
+ifneq ($(RECOVERY_SDCARD_ON_DATA),)
+	LOCAL_CFLAGS += -DRECOVERY_SDCARD_ON_DATA
+endif
+```
+
+So `RECOVERY_SDCARD_ON_DATA := false` still defines the macro and still enables the behaviour. A flag meant to be off must be **left undefined**, and the check is a grep on the generated build file rather than a read of `BoardConfig.mk`:
+
+```bash
+grep -o DRECOVERY_SDCARD_ON_DATA out/build-twrp_xdplus.ninja   # must print nothing
+strings $OUT/recovery/root/system/bin/recovery | grep RECOVERY_SDCARD_ON_DATA
+```
+
+A handful of flags nearby do use `ifeq ($(...), true)` — `BOARD_HAS_NO_REAL_SDCARD` is one — so the form is per-flag and worth reading each time.
+
+**Related, and not a board flag at all**: `partitionmanager.cpp` re-enables `datamedia` on its own when no partition is marked settings-storage and a `/data` partition exists. Turning the define off is therefore only half of keeping recovery off `/data`; the other half is `settingsstorage` on `/external_sd` in `twrp.fstab`. ⚠️ That scan requires `Is_Present`, and the microSD is `removable` — **with no card inserted the fallback returns and TWRP writes to `/data` again**.
+
 ## The by-name path symlink is load-bearing
 
 `recovery/root/init.recovery.mt8173.rc` contains:
