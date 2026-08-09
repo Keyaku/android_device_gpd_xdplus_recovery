@@ -113,7 +113,7 @@ TW_INTERNAL_STORAGE_MOUNT_POINT := "data"
 TW_EXTERNAL_STORAGE_PATH := "/external_sd"
 TW_EXTERNAL_STORAGE_MOUNT_POINT := "external_sd"
 # Storage must NOT live on /data. This recovery cannot decrypt, so with
-# RECOVERY_SDCARD_ON_DATA := true it stored its settings and logs in
+# RECOVERY_SDCARD_ON_DATA defined it stored its settings and logs in
 # /data/media/0/TWRP -- writing PLAINTEXT names into an ext4 directory that
 # carries an fscrypt policy. That produces malformed encrypted dirents, proved
 # on hardware by e2fsck: "Encrypted entry 'TWRP' in /media/0 is too short",
@@ -122,7 +122,19 @@ TW_EXTERNAL_STORAGE_MOUNT_POINT := "external_sd"
 # fscrypt_init_user0 and reboots the device into recovery on boot.
 # The microSD is the storage instead; zips go to /external_sd or /tmp, which is
 # what the flashing workflow already does.
-RECOVERY_SDCARD_ON_DATA := false
+#
+# RECOVERY_SDCARD_ON_DATA is deliberately LEFT UNSET, never set to false:
+# bootable/recovery/Android.mk gates it with ifneq ($(...),), so ANY non-empty
+# value -- including "false" -- adds -DRECOVERY_SDCARD_ON_DATA and turns the
+# behaviour back on. Verify with:
+#   grep -o DRECOVERY_SDCARD_ON_DATA out/build-twrp_xdplus.ninja
+# which must print nothing.
+#
+# Unsetting it is necessary but NOT sufficient: partitionmanager.cpp turns
+# datamedia back on by itself when no settings storage is present and there is
+# a /data partition. The microSD carries the "settingsstorage" flag in
+# twrp.fstab to claim that role before that fallback runs.
+# RECOVERY_SDCARD_ON_DATA is intentionally not defined here.
 TW_DEFAULT_EXTERNAL_STORAGE := true
 TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/class/android_usb/android0/f_mass_storage/lun/file
 
