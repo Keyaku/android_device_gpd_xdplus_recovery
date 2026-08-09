@@ -112,12 +112,26 @@ TW_INTERNAL_STORAGE_PATH := "/data/media"
 TW_INTERNAL_STORAGE_MOUNT_POINT := "data"
 TW_EXTERNAL_STORAGE_PATH := "/external_sd"
 TW_EXTERNAL_STORAGE_MOUNT_POINT := "external_sd"
-RECOVERY_SDCARD_ON_DATA := true
+# Storage must NOT live on /data. This recovery cannot decrypt, so with
+# RECOVERY_SDCARD_ON_DATA := true it stored its settings and logs in
+# /data/media/0/TWRP -- writing PLAINTEXT names into an ext4 directory that
+# carries an fscrypt policy. That produces malformed encrypted dirents, proved
+# on hardware by e2fsck: "Encrypted entry 'TWRP' in /media/0 is too short",
+# leaving the filesystem with errors. The same corruption shape is what makes
+# /data/misc/vold a dirent whose stat() fails, which kills vold's
+# fscrypt_init_user0 and reboots the device into recovery on boot.
+# The microSD is the storage instead; zips go to /external_sd or /tmp, which is
+# what the flashing workflow already does.
+RECOVERY_SDCARD_ON_DATA := false
 TW_DEFAULT_EXTERNAL_STORAGE := true
 TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/class/android_usb/android0/f_mass_storage/lun/file
 
-# Crypto — this device uses neither FDE nor FBE, which is also why TWRP needs no
-# keymaster/gatekeeper HAL and therefore no vendor blobs at all.
+# Crypto. ⚠️ The old comment here claimed this device uses neither FDE nor FBE.
+# That was true of the shipped ROM and is no longer a safe assumption: FBE v1
+# has been run on this device, and a recovery that cannot decrypt must at least
+# not WRITE to /data (see RECOVERY_SDCARD_ON_DATA above). Adding real decrypt
+# support means dragging keymaster/gatekeeper and the TEE blobs into the
+# recovery ramdisk; that stays a separate, deliberate piece of work.
 TW_INCLUDE_CRYPTO := false
 TW_EXCLUDE_ENCRYPTED_BACKUPS := false
 
