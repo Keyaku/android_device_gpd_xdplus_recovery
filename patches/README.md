@@ -12,6 +12,7 @@ git -C <target-repo> apply --check --reverse <patch>
 |---|---|---|
 | `0001-bootable_recovery-tolerate-a-LUN-path-without-a-conversion.patch` | `bootable/recovery` (TeamWin, `android-11`) | Build fix, needed by any device whose mass-storage LUN path contains no `%d`. |
 | `0002-theme-drop-navbar-settings-and-twrp-app.patch` | `bootable/recovery` (TeamWin, `android-11`) | Drops dead UI from the shared theme pages: navbar settings, and the TWRP app installer. |
+| `0003-bootable_recovery-report-ORS-wipe-and-format-failures.patch` | `bootable/recovery` (TeamWin, `android-11`) | A scripted `twrp wipe` / `twrp format` reported success unconditionally; the return value was discarded. |
 
 ## 0001 — LUN path without a conversion
 
@@ -27,3 +28,9 @@ Two removals from `gui/theme/common/landscape.xml`, which `TW_CUSTOM_THEME` cann
 
 - **Navbar settings** — the "Reversed navbar layout" checkbox and six navbar-alignment radio buttons. This device has physical buttons, so the on-screen navbar is removed by our theme and these settings control nothing.
 - **"Install TWRP App"** — the Advanced menu entry that offers to install the official TWRP app. The theme is the only entry point (nothing in the C++ navigates to that page), so removing the entry removes the feature. The now-unreachable `installapp` page is deliberately left in place to keep the patch small.
+
+## 0003 — a scripted wipe could not fail
+
+`openrecoveryscript.cpp` called `Format_Data()`, `Factory_Reset()`, `Wipe_By_Path()` and `Wipe_Dalvik_Cache()` and dropped the result on the floor, so `twrp format data` printed "Done processing script file" and exited 0 no matter what happened underneath. The GUI path is unaffected — `GUIAction::wipe` passes the same call's `ret_val` to `operation_end()`, so the button does surface a failure.
+
+⚠️ **This is the reporting half only.** On this device the format itself works: `twrp format data` on TWRP 3.7.0_11-0 ran `mke2fs -t ext4 -b 4096 /dev/block/mmcblk0p25 6670331` with RC=0 followed by `e2fsdroid` RC=0, and left `/data` genuinely empty. `Wipe_EXTFS()` unmounts before calling `mke2fs`, so the missing `-F` never bites here.

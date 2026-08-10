@@ -1,0 +1,152 @@
+From: GPD XD+ TWRP device tree
+Subject: [PATCH] openrecoveryscript: report wipe, format and CLI failures
+
+A scripted wipe could not fail. Three layers each discarded the result:
+openrecoveryscript.cpp ran Format_Data(), Factory_Reset(), Wipe_By_Path() and
+Wipe_Dalvik_Cache() without looking at what they returned; Run_CLI_Command()
+threw away run_script_file()'s value; and GUIAction::twcmd passed a literal 0 to
+operation_end(). So `twrp format data` ended "Done processing script file" with
+status 0 whether or not the partition was touched. The GUI wipe button was
+unaffected -- it already passed its own ret_val to operation_end().
+
+Propagate the status through all three. Note this cannot reach the `twrp`
+binary's own exit code: orscmd talks to TWRP over a text-only FIFO and returns 0
+regardless. What it does fix is the reported operation status and the
+/cache/recovery/openrecoveryscript path, where Run_OpenRecoveryScript_Action()
+reboots to system only when run_script_file() returned 0.
+
+diff --git a/gui/action.cpp b/gui/action.cpp
+index d5b8c8f..bddf720 100755
+--- a/gui/action.cpp
++++ b/gui/action.cpp
+@@ -1823,12 +1823,14 @@ int GUIAction::flashimage(std::string arg __unused)
+ 
+ int GUIAction::twcmd(std::string arg)
+ {
++	int op_status = 0;
++
+ 	operation_start("TWRP CLI Command");
+ 	if (simulate)
+ 		simulate_progress_bar();
+ 	else
+-		OpenRecoveryScript::Run_CLI_Command(arg.c_str());
+-	operation_end(0);
++		op_status = OpenRecoveryScript::Run_CLI_Command(arg.c_str());
++	operation_end(op_status);
+ 	return 0;
+ }
+ 
+diff --git a/openrecoveryscript.cpp b/openrecoveryscript.cpp
+index c2ff0fe..9559a88 100755
+--- a/openrecoveryscript.cpp
++++ b/openrecoveryscript.cpp
+@@ -153,14 +153,18 @@ int OpenRecoveryScript::run_script_file(void) {
+ 			} else if (strcmp(command, "wipe") == 0) {
+ 				// Wipe
+ 				if (strcmp(value, "cache") == 0 || strcmp(value, "/cache") == 0) {
+-					PartitionManager.Wipe_By_Path("/cache");
++					if (!PartitionManager.Wipe_By_Path("/cache"))
++						ret_val = 1;
+ 				} else if (strcmp(value, "system") == 0 || strcmp(value, "/system") == 0 || strcmp(value, PartitionManager.Get_Android_Root_Path().c_str()) == 0) {
+-					PartitionManager.Wipe_By_Path("/system");
++					if (!PartitionManager.Wipe_By_Path("/system"))
++						ret_val = 1;
+ 					PartitionManager.Update_System_Details();
+ 				} else if (strcmp(value, "dalvik") == 0 || strcmp(value, "dalvick") == 0 || strcmp(value, "dalvikcache") == 0 || strcmp(value, "dalvickcache") == 0) {
+-					PartitionManager.Wipe_Dalvik_Cache();
++					if (!PartitionManager.Wipe_Dalvik_Cache())
++						ret_val = 1;
+ 				} else if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
+-					PartitionManager.Factory_Reset();
++					if (!PartitionManager.Factory_Reset())
++						ret_val = 1;
+ 				} else {
+ 					LOGERR("Error with wipe command value: '%s'\n", value);
+ 					ret_val = 1;
+@@ -168,7 +172,8 @@ int OpenRecoveryScript::run_script_file(void) {
+ 			} else if (strcmp(command, "format") == 0) {
+ 				// Format
+ 				if (strcmp(value, "data") == 0 || strcmp(value, "/data") == 0 || strcmp(value, "factory") == 0 || strcmp(value, "factoryreset") == 0) {
+-					PartitionManager.Format_Data();
++					if (!PartitionManager.Format_Data())
++						ret_val = 1;
+ 				} else {
+ 					LOGERR("Error with format command value: '%s'\n", value);
+ 					ret_val = 1;
+@@ -677,7 +682,8 @@ int OpenRecoveryScript::Run_OpenRecoveryScript_Action() {
+ }
+ 
+ // this is called by the "twcmd" GUI action when a command is received via FIFO from the "twrp" command line tool
+-void OpenRecoveryScript::Run_CLI_Command(const char* command) {
++int OpenRecoveryScript::Run_CLI_Command(const char* command) {
++	int op_status = 0;
+ 	string tmp = command;
+ 	std::vector<string> parts =
+ 		TWFunc::Split_String(tmp, " ");  // pats[0] is cmd, parts[1...] is args
+@@ -688,11 +694,13 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
+ 			string filename = parts[1];
+ 			if (OpenRecoveryScript::copy_script_file(filename) == 0) {
+ 				LOGINFO("Unable to copy script file\n");
++				op_status = 1;
+ 			} else {
+-				OpenRecoveryScript::run_script_file();
++				op_status = OpenRecoveryScript::run_script_file();
+ 			}
+ 		} else {
+ 			LOGINFO("Missing parameter: script file name\n");
++			op_status = 1;
+ 		}
+ 	} else if (cmd_str == "get") {
+ 		if (parts.size() > 1) {
+@@ -702,11 +710,13 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
+ 			gui_print("%s = %s\n", varname.c_str(), value.c_str());
+ 		} else {
+ 			LOGINFO("Missing parameter: var name\n");
++			op_status = 1;
+ 		}
+ 	} else if (cmd_str == "decrypt") {
+ 		// twrp cmd cannot decrypt a password with space, should decrypt on gui
+ 		if (parts.size() == 1) {
+ 			gui_err("no_pwd=No password provided.");
++			op_status = 1;
+ 		} else {
+ 			string pass = parts[1];
+ 			string userid = "0";
+@@ -718,17 +728,22 @@ void OpenRecoveryScript::Run_CLI_Command(const char* command) {
+ 				// set_page_done = 1;  // done by singleaction_page anyway
+ 				std::string orsFile = TWFunc::get_log_dir() + "/openrecoveryscript";
+ 				if (TWFunc::Path_Exists(orsFile)) {
+-					Run_OpenRecoveryScript_Action();
++					op_status = Run_OpenRecoveryScript_Action();
+ 				}
++			} else {
++				op_status = 1;
+ 			}
+ 		}
+ 	} else if (OpenRecoveryScript::Insert_ORS_Command(command)) {
+-		OpenRecoveryScript::run_script_file();
++		op_status = OpenRecoveryScript::run_script_file();
++	} else {
++		op_status = 1;
+ 	}
+ 
+ 	// let the GUI close the output fd and restart the command listener
+ 	call_after_cli_command();
+ 	LOGINFO("Done reading ORS command from command line\n");
++	return op_status;
+ }
+ 
+ int OpenRecoveryScript::remountrw(void)
+diff --git a/openrecoveryscript.hpp b/openrecoveryscript.hpp
+index 0806223..56c70a0 100644
+--- a/openrecoveryscript.hpp
++++ b/openrecoveryscript.hpp
+@@ -39,7 +39,7 @@ public:
+ 	static void Run_OpenRecoveryScript();                                          // Starts the GUI Page for running OpenRecoveryScript
+ 	static int Run_OpenRecoveryScript_Action();                                    // Actually runs the ORS scripts for the GUI action
+ 	static void Call_After_CLI_Command(VoidFunction fn) { call_after_cli_command = fn; }
+-	static void Run_CLI_Command(const char* command);                              // Runs a command for orscmd (twrp binary)
++	static int Run_CLI_Command(const char* command);                               // Runs a command for orscmd (twrp binary)
+ 	static int remountrw();                                                        // Remount system and vendor rw
+ };
+ 
