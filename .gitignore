@@ -4,3 +4,6 @@ prebuilt/*.img
 
 *.swp
 .DS_Store
+
+# Maintainer notes are local-only.
+CLAUDE.md
