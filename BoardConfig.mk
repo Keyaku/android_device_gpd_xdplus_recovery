@@ -144,7 +144,8 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/class/android_usb/android0/f_mass_storag
 # not WRITE to /data (see RECOVERY_SDCARD_ON_DATA above). Adding real decrypt
 # support means dragging keymaster/gatekeeper and the TEE blobs into the
 # recovery ramdisk; that stays a separate, deliberate piece of work.
-TW_INCLUDE_CRYPTO := false
+# TW_INCLUDE_CRYPTO is intentionally not defined here -- see CLAUDE.md.
+# TW_EXCLUDE_ENCRYPTED_BACKUPS is gated the other way round; keep it set.
 TW_EXCLUDE_ENCRYPTED_BACKUPS := false
 
 # Filesystems: the kernel has CONFIG_EXFAT_FS=y, but keep the userspace tools so
